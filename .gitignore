@@ -66,3 +66,6 @@ freeline_project_description.json
 
 # secret settings (for api and such)
 /gradle.properties
+
+# notes backup and suchs
+*.bak
