@@ -1,6 +1,5 @@
 package com.steward.whale.popularmovies;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -11,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -31,8 +29,7 @@ public class PosterFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private final String LOG_TAG = PosterFragment.class.getSimpleName();
-    private ImageAdapter mMovieAdapter;
-    private String[] imageUrls;
+    private PosterAdapter mMovieAdapter;
 
     public PosterFragment() {
     }
@@ -42,6 +39,7 @@ public class PosterFragment extends Fragment {
         super.onStart();
         updateMovie();
     }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,9 +48,10 @@ public class PosterFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         View rootView = inflater.inflate(R.layout.fragment_poster, container, false);
 
-        mMovieAdapter = new ImageAdapter(getActivity());
+        mMovieAdapter = new PosterAdapter(getActivity(), new ArrayList<Poster>());
 
         GridView gridView = (GridView) rootView.findViewById(R.id.gridview_poster);
         gridView.setAdapter(mMovieAdapter);
@@ -67,24 +66,24 @@ public class PosterFragment extends Fragment {
     }
 
 
+    public class FetchMovieTask extends AsyncTask<String, Void, ArrayList<Poster>>{
 
-    public class FetchMovieTask extends AsyncTask<String, Void, ArrayList<String>>{
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
 
-
-        private ArrayList<String> getMovieDataFromJson(String moviesJsonStr ) throws JSONException{
-            ArrayList<String> resultsStrs = new ArrayList<String>();
+        private ArrayList<Poster> getMovieDataFromJson(String moviesJsonStr ) throws JSONException{
+            ArrayList<Poster> resultsMovie = new ArrayList<Poster>();
             JSONObject moviesJson = new JSONObject(moviesJsonStr);
             JSONArray moviesArray = moviesJson.getJSONArray("results");
 
             for (int i =0; i < moviesArray.length(); i++){
                 JSONObject movie = moviesArray.getJSONObject(i);
-                resultsStrs.add(movie.getString("poster_path"));
+
+                resultsMovie.add(new Poster(movie.getString("poster_path"), movie.getString("id")) );
             }
-            return resultsStrs;
+            return resultsMovie;
         }
 
-        protected ArrayList<String> doInBackground(String... params){
+        protected ArrayList<Poster> doInBackground(String... params){
             Log.d(LOG_TAG, "open background");
 
             // safe guard
@@ -166,10 +165,13 @@ public class PosterFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> results){
+        protected void onPostExecute(ArrayList<Poster> results){
             if (results != null){
-                mMovieAdapter.setUrls(results);
-                mMovieAdapter.notifyDataSetChanged();
+                mMovieAdapter.clear();
+                for (Poster poster : results){
+                    mMovieAdapter.add(poster);
+                    Log.d("debugging", poster.movieID);
+                }
             }
         }
     }
